@@ -7,7 +7,6 @@ import { Separator } from "#/components/ui/separator";
 import { Textarea } from "#/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogClose,
@@ -29,44 +28,50 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckboxList } from "./ScoutingComponents";
 import * as scoutingValues from "./ScoutingValues";
-
-const events = [
-	{ value: "2026casnf", label: "2026 San Francisco" },
-	{ value: "2026cacac", label: "2026 Contra Costa" },
-	{ value: "2026cancmp", label: "2026 NorCal DCMP" },
-	{ value: "2026sunshow", label: "2026 Sunset Showdown" },
-];
 
 export function ScoutingForm() {
 	const [activeTab, setActiveTab] = React.useState("pre");
-	const [autoFuel, autoFuelValue] = React.useState<number>(0);
+	const [autoFuel, setAutoFuel] = React.useState<number>(0);
 	const [autoLocation, setAutoLocation] = React.useState<string[]>([]);
-	const [teleopFuel, teleopFuelValue] = React.useState<number>(0);
+	const [teleopFuel, setTeleopFuel] = React.useState<number>(0);
 	const [selectedClimbValue, setClimbValue] = React.useState<string[]>([]);
 
 	const [nameValue, setNameValue] = React.useState("");
 	const [eventValue, setEventValue] = React.useState("");
-	const [matchValue, setMatchValue] = React.useState<number>(0);
+	const [matchValue, setMatchValue] = React.useState("");
 	const [positionValue, setPositionValue] = React.useState("");
 
 	const [commentValue, setCommentValue] = React.useState("");
 	const [selectedPlayStyle, setPlayStyle] = React.useState<string[]>([]);
+	const [selectedCross, setCross] = React.useState<string[]>([]);
 	const [shooterRating, setShooterRating] = React.useState("");
 	const [defenseRating, setDefenseRating] = React.useState("");
+	const isPreMatchComplete =
+		nameValue.trim() !== "" &&
+		eventValue !== "" &&
+		positionValue !== "" &&
+		matchValue !== "";
+
+	React.useEffect(() => {
+		document.title = "5507 Scouting";
+	}, []);
 
 	return (
 		<div className="flex max-w-sm flex-col gap-4 text-sm">
-			<Tabs
-				value={activeTab}
-				onValueChange={setActiveTab}
-				className="w-full max-w-sm"
-			>
-				<TabsList>
+			<Tabs value={activeTab} onValueChange={setActiveTab}>
+				<TabsList className="w-full justify-center">
 					<TabsTrigger value="pre">Pre-Match</TabsTrigger>
-					<TabsTrigger value="auto">Auto</TabsTrigger>
-					<TabsTrigger value="tele">Teleop</TabsTrigger>
-					<TabsTrigger value="post">Post-Match</TabsTrigger>
+					<TabsTrigger value="auto" disabled={!isPreMatchComplete}>
+						Auto
+					</TabsTrigger>
+					<TabsTrigger value="tele" disabled={!isPreMatchComplete}>
+						Teleop
+					</TabsTrigger>
+					<TabsTrigger value="post" disabled={!isPreMatchComplete}>
+						Post-Match
+					</TabsTrigger>
 				</TabsList>
 				<TabsContent value="pre" keepMounted>
 					{PreMatchCard()}
@@ -92,23 +97,18 @@ export function ScoutingForm() {
 		const max = 100;
 
 		const handleIncrement = () => {
-			autoFuelValue((prev) => Math.min(prev + 5, max));
+			setAutoFuel((prev) => Math.min(prev + 5, max));
 		};
 		const handleDecrement = () => {
-			autoFuelValue((prev) => Math.max(prev - 5, min));
+			setAutoFuel((prev) => Math.max(prev - 5, min));
 		};
 		const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			const newValue = parseInt(e.target.value, 10);
-			if (!isNaN(newValue)) {
-				autoFuelValue(Math.min(Math.max(newValue, min), max));
+			if (!Number.isNaN(newValue)) {
+				setAutoFuel(Math.min(Math.max(newValue, min), max));
 			} else if (e.target.value === "") {
-				autoFuelValue(0);
+				setAutoFuel(0);
 			}
-		};
-		const handleChecklistChange = (id: string, checked: boolean) => {
-			setAutoLocation((prev) =>
-				checked ? [...prev, id] : prev.filter((item) => item !== id),
-			);
 		};
 
 		return (
@@ -119,7 +119,8 @@ export function ScoutingForm() {
 						<div>
 							<Input
 								className="w-1/2"
-								type="number"
+								type="numeric"
+								pattern="[0-9]*"
 								value={autoFuel}
 								onChange={handleInputChange}
 							/>
@@ -133,18 +134,17 @@ export function ScoutingForm() {
 						<Separator />
 						<p>Auto Locations</p>
 						<div className="flex max-w-sm flex-col gap-1">
-							{scoutingValues.autoLocations.map((item) => (
-								<div key={item.id} className="flex items-center space-x-3">
-									<Checkbox
-										id={item.id}
-										checked={autoLocation.includes(item.id)}
-										onCheckedChange={(checked) =>
-											handleChecklistChange(item.id, !!checked)
-										}
-									/>
-									<label htmlFor={item.id}> {item.label} </label>
-								</div>
-							))}
+							<CheckboxList
+								items={scoutingValues.autoLocations}
+								selected={autoLocation}
+								onChange={(id, checked) => {
+									setAutoLocation((previous) =>
+										checked
+											? [...previous, id]
+											: previous.filter((item) => item !== id),
+									);
+								}}
+							/>
 						</div>
 					</div>
 				</CardContent>
@@ -157,23 +157,18 @@ export function ScoutingForm() {
 		const max = 500;
 
 		const handleIncrement = () => {
-			teleopFuelValue((prev) => Math.min(prev + 5, max));
+			setTeleopFuel((prev) => Math.min(prev + 5, max));
 		};
 		const handleDecrement = () => {
-			teleopFuelValue((prev) => Math.max(prev - 5, min));
+			setTeleopFuel((prev) => Math.max(prev - 5, min));
 		};
 		const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			const newValue = parseInt(e.target.value, 10);
-			if (!isNaN(newValue)) {
-				teleopFuelValue(Math.min(Math.max(newValue, min), max));
+			if (!Number.isNaN(newValue)) {
+				setTeleopFuel(Math.min(Math.max(newValue, min), max));
 			} else if (e.target.value === "") {
-				teleopFuelValue(0);
+				setTeleopFuel(0);
 			}
-		};
-		const handleChecklistChange = (id: string, checked: boolean) => {
-			setClimbValue((prev) =>
-				checked ? [...prev, id] : prev.filter((item) => item !== id),
-			);
 		};
 
 		return (
@@ -184,7 +179,8 @@ export function ScoutingForm() {
 						<div>
 							<Input
 								className="w-1/2"
-								type="number"
+								type="numeric"
+								pattern="[0-9]*"
 								value={teleopFuel}
 								onChange={handleInputChange}
 							/>
@@ -198,18 +194,17 @@ export function ScoutingForm() {
 						<Separator />
 						<p>Climb</p>
 						<div className="flex max-w-sm flex-col gap-1">
-							{scoutingValues.climbValues.map((item) => (
-								<div key={item.id} className="flex items-center space-x-3">
-									<Checkbox
-										id={item.id}
-										checked={selectedClimbValue.includes(item.id)}
-										onCheckedChange={(checked) =>
-											handleChecklistChange(item.id, !!checked)
-										}
-									/>
-									<label htmlFor={item.id}> {item.label} </label>
-								</div>
-							))}
+							<CheckboxList
+								items={scoutingValues.climbValues}
+								selected={selectedClimbValue}
+								onChange={(id, checked) => {
+									setClimbValue((previous) =>
+										checked
+											? [...previous, id]
+											: previous.filter((item) => item !== id),
+									);
+								}}
+							/>
 						</div>
 					</div>
 				</CardContent>
@@ -223,9 +218,10 @@ export function ScoutingForm() {
 				<CardContent>
 					<div className="flex max-w-sm flex-col gap-2 text-sm">
 						<Field>
-							<FieldLabel htmlFor="name-input">Scouter Name</FieldLabel>
+							<FieldLabel htmlFor="name-input">Scouter Initials</FieldLabel>
 							<Input
 								id="name-input"
+								placeholder="Enter your initials"
 								value={nameValue}
 								onChange={(event) => {
 									setNameValue(event.target.value);
@@ -234,7 +230,7 @@ export function ScoutingForm() {
 						</Field>
 						<Label htmlFor="event-select">Event</Label>
 						<Select
-							items={events}
+							items={scoutingValues.events}
 							value={eventValue}
 							onValueChange={(value) => setEventValue(value ?? "")}
 						>
@@ -243,7 +239,7 @@ export function ScoutingForm() {
 							</SelectTrigger>
 							<SelectContent>
 								<SelectGroup>
-									{events.map((item) => (
+									{scoutingValues.events.map((item) => (
 										<SelectItem key={item.value} value={item.value}>
 											{item.label}
 										</SelectItem>
@@ -255,9 +251,11 @@ export function ScoutingForm() {
 							<FieldLabel htmlFor="match-input">Match Number</FieldLabel>
 							<Input
 								id="match-input"
+								type="numeric"
+								pattern="[0-9]*"
 								placeholder=""
 								value={matchValue}
-								onChange={(event) => setMatchValue(Number(event.target.value))}
+								onChange={(event) => setMatchValue(event.target.value)}
 							/>
 						</Field>
 						<Label htmlFor="position-select">Robot Position</Label>
@@ -282,7 +280,11 @@ export function ScoutingForm() {
 					</div>
 				</CardContent>
 				<CardFooter>
-					<Button className="w-full" onClick={() => setActiveTab("auto")}>
+					<Button
+						disabled={!isPreMatchComplete}
+						className="w-full"
+						onClick={() => setActiveTab("auto")}
+					>
 						Continue
 					</Button>
 				</CardFooter>
@@ -334,11 +336,6 @@ export function ScoutingForm() {
 		);
 	}
 	function GeneralCard() {
-		const handleChecklistChange = (id: string, checked: boolean) => {
-			setPlayStyle((prev) =>
-				checked ? [...prev, id] : prev.filter((item) => item !== id),
-			);
-		};
 		return (
 			<Card>
 				<CardContent>
@@ -348,29 +345,31 @@ export function ScoutingForm() {
 							className="flex max-w-sm flex-col gap-1"
 							id="playstyle-checkboxes"
 						>
-							{scoutingValues.playStyles.map((item) => (
-								<div key={item.id} className="flex items-center space-x-3">
-									<Checkbox
-										id={item.id}
-										checked={selectedPlayStyle.includes(item.id)}
-										onCheckedChange={(checked) =>
-											handleChecklistChange(item.id, !!checked)
-										}
-									/>
-									<label htmlFor={item.id}> {item.label} </label>
-								</div>
-							))}
+							<CheckboxList
+								items={scoutingValues.playStyles}
+								selected={selectedPlayStyle}
+								onChange={(id, checked) => {
+									setPlayStyle((previous) =>
+										checked
+											? [...previous, id]
+											: previous.filter((item) => item !== id),
+									);
+								}}
+							/>
 						</div>
 						<Label htmlFor="cross-checkboxes">Crosses With</Label>
 						<div className="flex max-w-sm flex-col gap-1" id="cross-checkboxes">
-							<div className="flex items-center space-x-3">
-								<Checkbox id="check-bump" />
-								<label htmlFor="check-bump">Bump</label>
-							</div>
-							<div className="flex items-center space-x-3">
-								<Checkbox id="check-trench" />
-								<label htmlFor="check-trench">Trench</label>
-							</div>
+							<CheckboxList
+								items={scoutingValues.crossTypes}
+								selected={selectedCross}
+								onChange={(id, checked) => {
+									setCross((previous) =>
+										checked
+											? [...previous, id]
+											: previous.filter((item) => item !== id),
+									);
+								}}
+							/>
 						</div>
 						<p>Comments</p>
 						<Textarea
@@ -378,6 +377,10 @@ export function ScoutingForm() {
 							value={commentValue}
 							onChange={(e) => setCommentValue(e.target.value ?? "")}
 						/>
+					</div>
+				</CardContent>
+				<CardFooter>
+					<div className="w-full">
 						<div className={activeTab === "post" ? "hidden" : undefined}>
 							<Button
 								className="w-full"
@@ -392,7 +395,7 @@ export function ScoutingForm() {
 							<QRDialog />
 						</div>
 					</div>
-				</CardContent>
+				</CardFooter>
 			</Card>
 		);
 	}
@@ -423,7 +426,9 @@ export function ScoutingForm() {
 						</div>
 						<DialogFooter>
 							<DialogClose render={<Button variant="outline">Cancel</Button>} />
-							<Button type="submit">Save + Close</Button>
+							<Button type="submit" onClick={clearFormData}>
+								Save + Close
+							</Button>
 						</DialogFooter>
 					</DialogContent>
 				</form>
@@ -431,12 +436,29 @@ export function ScoutingForm() {
 		);
 	}
 	function generateFormData() {
+		//turn all the state values into a JSON string
 		return JSON.stringify([
-			[nameValue, eventValue, matchValue, positionValue],
+			[nameValue.trim().toUpperCase(), eventValue, matchValue, positionValue],
 			[autoFuel, autoLocation],
 			[teleopFuel, selectedClimbValue],
-			[selectedPlayStyle, commentValue],
+			[selectedCross, selectedPlayStyle, commentValue.trim()],
 			[shooterRating, defenseRating],
 		]);
+	}
+	function clearFormData() {
+		//reset values for new match
+		setAutoFuel(0);
+		setTeleopFuel(0);
+		setAutoLocation([]);
+		setClimbValue([]);
+		setPlayStyle([]);
+		setCross([]);
+		setCommentValue("");
+		setShooterRating("");
+		setDefenseRating("");
+
+		//increment match and switch back to the first tab
+		setMatchValue((currentMatch) => String(Number(currentMatch) + 1));
+		setActiveTab("pre");
 	}
 }

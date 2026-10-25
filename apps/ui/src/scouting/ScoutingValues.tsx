@@ -1,3 +1,9 @@
+export const events = [
+	{ value: "2026casnf", label: "San Francisco" },
+	{ value: "2026cacac", label: "Contra Costa" },
+	{ value: "2026cancmp", label: "NorCal DCMP" },
+	{ value: "2026sunshow", label: "Sunset Showdown" },
+];
 export const autoLocations = [
 	{ id: "none", label: "None" },
 	{ id: "depot", label: "Depot" },
@@ -39,4 +45,8 @@ export const playStyles = [
 	{ id: "defense", label: "Defense" },
 	{ id: "thief", label: "Thief" },
 	{ id: "clean", label: "Clean Up" },
+];
+export const crossTypes = [
+	{ id: "bump", label: "Bump" },
+	{ id: "trench", label: "Trench" },
 ];
