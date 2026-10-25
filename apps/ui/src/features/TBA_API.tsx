@@ -1,5 +1,5 @@
 const API_KEY =
-	"1pASptoMl6xXHptBnpRfEG3KFU6ghqdU9pzDNs3WWaD9hXsL6LDW22imF99SZlFA";
+	"";
 const controller = new AbortController();
 
 export async function fetchMatchInfo(
