@@ -30,6 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckboxList } from "./ScoutingComponents";
 import * as scoutingValues from "./ScoutingValues";
+import { fetchMatchInfo } from "./TBA_API";
 
 export function ScoutingForm() {
 	const [activeTab, setActiveTab] = React.useState("pre");
@@ -42,12 +43,15 @@ export function ScoutingForm() {
 	const [eventValue, setEventValue] = React.useState("");
 	const [matchValue, setMatchValue] = React.useState("");
 	const [positionValue, setPositionValue] = React.useState("");
+	const [teamValue, setTeamValue] = React.useState("");
 
 	const [commentValue, setCommentValue] = React.useState("");
 	const [selectedPlayStyle, setPlayStyle] = React.useState<string[]>([]);
 	const [selectedCross, setCross] = React.useState<string[]>([]);
 	const [shooterRating, setShooterRating] = React.useState("");
 	const [defenseRating, setDefenseRating] = React.useState("");
+	const [matchInfo, setMatchInfo] = React.useState<string | null>(null);
+	const [matchTime, setMatchTime] = React.useState<string | null>(null);
 	const isPreMatchComplete =
 		nameValue.trim() !== "" &&
 		eventValue !== "" &&
@@ -57,6 +61,37 @@ export function ScoutingForm() {
 	React.useEffect(() => {
 		document.title = "5507 Scouting";
 	}, []);
+
+	React.useEffect(() => {
+		if (eventValue === "" || matchValue === "" || positionValue === "") {
+			setMatchInfo(null);
+			return;
+		}
+
+		let cancelled = false;
+		setMatchInfo(null);
+		fetchMatchInfo(eventValue, Number(matchValue), positionValue)
+			.then((info) => {
+				if (!cancelled) {
+					const date = new Date(info[1] * 1000);
+					setMatchInfo(info[0]);
+					setTeamValue(info[0].slice(3));
+					setMatchTime(date.toLocaleTimeString());
+				}
+			})
+			.catch((error: unknown) => {
+				if (!cancelled) {
+					console.error("Unable to fetch match information", error);
+					setMatchInfo(null);
+					setTeamValue("");
+					setMatchTime(null);
+				}
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [eventValue, matchValue, positionValue]);
 
 	return (
 		<div className="flex max-w-sm flex-col gap-4 text-sm">
@@ -216,7 +251,7 @@ export function ScoutingForm() {
 		return (
 			<Card>
 				<CardContent>
-					<div className="flex max-w-sm flex-col gap-2 text-sm">
+					<div className="flex max-w-sm flex-col gap-4 text-sm">
 						<Field>
 							<FieldLabel htmlFor="name-input">Scouter Initials</FieldLabel>
 							<Input
@@ -277,6 +312,29 @@ export function ScoutingForm() {
 								</SelectGroup>
 							</SelectContent>
 						</Select>
+						<div
+							className={
+								!isPreMatchComplete
+									? "hidden"
+									: "flex max-w-sm flex-col gap-4 text-sm"
+							}
+						>
+							<Separator />
+							<Field>
+								<FieldLabel htmlFor="team-input">Team Number</FieldLabel>
+								<Input
+									id="team-input"
+									type="numeric"
+									pattern="[0-9]*"
+									placeholder=""
+									disabled={matchInfo !== null}
+									value={teamValue}
+									onChange={(event) => setTeamValue(event.target.value)}
+								/>
+							</Field>
+							<Label>Match Details</Label>
+							<p>Time: {matchTime}</p>
+						</div>
 					</div>
 				</CardContent>
 				<CardFooter>
@@ -410,12 +468,7 @@ export function ScoutingForm() {
 					<DialogContent className="sm:max-w-sm">
 						<DialogHeader>
 							<DialogTitle>
-								Match {matchValue} -{" "}
-								{
-									scoutingValues.positions.find(
-										(position) => position.value === positionValue,
-									)?.label
-								}
+								Match {matchValue} - {teamValue}
 							</DialogTitle>
 							<DialogDescription>
 								Once you get the QR Code scanned, press Close.
@@ -438,7 +491,13 @@ export function ScoutingForm() {
 	function generateFormData() {
 		//turn all the state values into a JSON string
 		return JSON.stringify([
-			[nameValue.trim().toUpperCase(), eventValue, matchValue, positionValue],
+			[
+				nameValue.trim().toUpperCase(),
+				eventValue,
+				matchValue,
+				positionValue,
+				teamValue,
+			],
 			[autoFuel, autoLocation],
 			[teleopFuel, selectedClimbValue],
 			[selectedCross, selectedPlayStyle, commentValue.trim()],
