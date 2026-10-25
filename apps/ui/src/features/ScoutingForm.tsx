@@ -50,7 +50,7 @@ export function ScoutingForm() {
 	const [matchValue, setMatchValue] = React.useState<number>(0);
 	const [positionValue, setPositionValue] = React.useState("");
 
-  const [commentValue, setCommentValue] = React.useState("");
+	const [commentValue, setCommentValue] = React.useState("");
 	const [selectedPlayStyle, setPlayStyle] = React.useState<string[]>([]);
 	const [shooterRating, setShooterRating] = React.useState("");
 	const [defenseRating, setDefenseRating] = React.useState("");
@@ -373,7 +373,11 @@ export function ScoutingForm() {
 							</div>
 						</div>
 						<p>Comments</p>
-						<Textarea placeholder="Enter any additional comments here..." value={commentValue} onChange={(e) => setCommentValue(e.target.value ?? "")}/>
+						<Textarea
+							placeholder="Enter any additional comments here..."
+							value={commentValue}
+							onChange={(e) => setCommentValue(e.target.value ?? "")}
+						/>
 						<div className={activeTab === "post" ? "hidden" : undefined}>
 							<Button
 								className="w-full"
@@ -415,7 +419,7 @@ export function ScoutingForm() {
 							</DialogDescription>
 						</DialogHeader>
 						<div className="flex flex-col items-center justify-center text-center">
-							<QRCode value={formData()} />
+							<QRCode value={generateFormData()} />
 						</div>
 						<DialogFooter>
 							<DialogClose render={<Button variant="outline">Cancel</Button>} />
@@ -426,13 +430,13 @@ export function ScoutingForm() {
 			</Dialog>
 		);
 	}
-	function formData() {
+	function generateFormData() {
 		return JSON.stringify([
 			[nameValue, eventValue, matchValue, positionValue],
 			[autoFuel, autoLocation],
 			[teleopFuel, selectedClimbValue],
-      [selectedPlayStyle, commentValue],
-      [shooterRating, defenseRating]
+			[selectedPlayStyle, commentValue],
+			[shooterRating, defenseRating],
 		]);
 	}
 }
