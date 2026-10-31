@@ -51,7 +51,8 @@ export function ScoutingForm() {
 	const [shooterRating, setShooterRating] = React.useState("");
 	const [defenseRating, setDefenseRating] = React.useState("");
 	const [matchInfo, setMatchInfo] = React.useState<string | null>(null);
-	const [matchTime, setMatchTime] = React.useState<string | null>(null);
+	const [matchTime, setMatchTime] = React.useState<Date | null>(null);
+	const now = new Date();
 	const isPreMatchComplete =
 		nameValue.trim() !== "" &&
 		eventValue !== "" &&
@@ -76,7 +77,7 @@ export function ScoutingForm() {
 					const date = new Date(info[1] * 1000);
 					setMatchInfo(info[0]);
 					setTeamValue(info[0].slice(3));
-					setMatchTime(date.toLocaleTimeString());
+					setMatchTime(date);
 				}
 			})
 			.catch((error: unknown) => {
@@ -248,7 +249,7 @@ export function ScoutingForm() {
 	}
 
 	function PreMatchCard() {
-		return (
+		return(
 			<Card>
 				<CardContent>
 					<div className="flex max-w-sm flex-col gap-4 text-sm">
@@ -326,14 +327,14 @@ export function ScoutingForm() {
 									id="team-input"
 									type="numeric"
 									pattern="[0-9]*"
-									placeholder=""
+									placeholder="Enter team number manually"
 									disabled={matchInfo !== null}
 									value={teamValue}
 									onChange={(event) => setTeamValue(event.target.value)}
 								/>
 							</Field>
 							<Label>Match Details</Label>
-							<p>Time: {matchTime}</p>
+							<p>Time: {matchTime?.toLocaleTimeString()}</p>
 						</div>
 					</div>
 				</CardContent>
